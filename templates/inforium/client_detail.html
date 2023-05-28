@@ -1,0 +1,57 @@
+{% extends 'base/base.html' %}
+{% load leaflet_tags %}
+{% block title %}
+Детали клиента - {{ client.name }}
+{% endblock title %}
+
+
+{% block content %}
+<div class="container mt-3">
+    <h1>{{ client.name }}</h1>
+    <p><strong>Группа:</strong> {{ client.group.name }}</p>
+    <p><strong>Полное наименование:</strong> {{ client.full_name }}</p>
+    <p><strong>Контактный телефон:</strong> {{ client.phone }}</p>
+
+    <h2>Оборудование</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Наименование</th>
+                <th>Инвентарный номер</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for equipment in client.equipment_set.all|slice:":10" %}
+            <tr>
+                <td>{{ equipment.name }}</td>
+                <td>{{ equipment.inv_number }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <a class="btn btn-primary" href="{% url 'inforium:client_equipment_list' client.id %}">Просмотреть все оборудование</a>
+
+    <h2>Подключения</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Тип канала</th>
+                <th>Тип порта</th>
+                <th>IP адрес</th>
+                <th>Маска подсети</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for instance in client.instance_set.all|slice:":10" %}
+            <tr>
+                <td>{{ instance.service_type }}</td>
+                <td>{{ instance.port_type }}</td>
+                <td>{{ instance.lan }}</td>
+                <td>{{ instance.lan_mask }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <a class="btn btn-primary" href="{% url 'inforium:client_instance_list' client.id %}">Просмотреть все подключения</a>
+</div>
+{% endblock content %}

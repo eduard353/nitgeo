@@ -1,0 +1,174 @@
+{% extends 'base/base.html' %}
+{% load leaflet_tags %}
+{% block title %}
+Map page
+{% endblock title %}
+
+
+{% block content %}
+
+
+<div class="wrap">
+    <script type="text/javascript">
+        var clientDetailUrl = "{% url 'inforium:client_detail' '999' %}"
+        function our_layers(map, options) {
+
+            var llist = L.control.locationlist({
+                locationsList: [
+                    {title: 'Центр', latlng: [54.8626, 69.1421], zoom: 15},
+                    {title: '20-й', latlng: [54.9055, 69.1446], zoom: 15},
+                    {title: '19-й', latlng: [54.9054, 69.1485], zoom: 15},
+                    {title: 'Вокзал', latlng: [54.8557, 69.1738], zoom: 15},
+                ],
+                position: 'topleft',
+                nextText: '',
+                nextTitle: 'Next',
+                prevText: '',
+                prevTitle: 'Previous',
+                showList: true
+            });
+            map.addControl(llist);
+
+
+            var markers = L.markerClusterGroup();
+
+
+            map.addLayer(markers);
+
+
+            var lines_datasets = new L.GeoJSON.AJAX("{% url 'nitmap:lines' %}", {
+                style: function colors(feature) {
+                    return {
+                        color: feature.properties.color.toString(),
+                        weight: 5,
+                        opacity: 0.7,
+                    }
+                },
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup('<b>' + feature.properties.name.toString() + '</b> <br>' + feature.properties.description.toString());
+
+
+                }
+            });
+
+
+            var test_datasets = new L.GeoJSON.AJAX("{% url 'nitmap:points' %}", {
+
+
+
+
+                onEachFeature: function (feature, layer) {
+
+                    var iconset = L.icon.glyph({
+                        prefix: '',
+                        glyph: '0',
+                    });
+
+                    var text = '';
+                    feature.properties.info.forEach(function (item, i, arr) {
+                        var clientDetailUrlForItem = clientDetailUrl.replace('999', item[1]);
+
+                        text = text + '<a href="' + clientDetailUrlForItem + '"><span class="link" onclick=' + '"changeText(' + item[1] + ')">' + item[0].toString() + '</span></a>' + '&emsp;' + '<a href="{% url 'admin:index' %}nitmap/instance/' + item[2].toString() + '/change" target="_blank">&#9997;</a>  <hr />';
+
+
+                        iconset = L.icon.glyph({
+                            prefix: '',
+                            glyph: arr.length.toString(),
+                        });
+
+
+
+                    })
+
+
+                    layer.setIcon(iconset);
+
+
+                    markers.addLayer(layer);
+
+
+                    layer.bindPopup('<b>' + feature.properties.point + '</b><hr />' + text);
+
+                }
+            });
+
+
+            var searchControl = new L.Control.Search({
+                layer: markers,
+                propertyName: 'point',
+                marker: false,
+
+                initial: false,
+                zoom: 16,
+
+            })
+
+
+            map.addControl(searchControl)
+
+            var geojsonMarkerOptions = {
+                radius: 3000,
+                fillColor: '#FF0000',
+                color: "#000",
+                weight: 1,
+                opacity: 0.2,
+                fillOpacity: 0.2
+            }
+
+
+            var circle_datasets = new L.GeoJSON.AJAX("{% url 'nitmap:circle' %}", {
+
+
+                pointToLayer: function (feature, latlng) {
+
+
+                    return new L.sector(latlng, geojsonMarkerOptions);
+
+
+                },
+
+
+            });
+
+
+            {#test_datasets.addTo(map);#}
+
+            {#map.addLayer(markers);#}
+            circle_datasets.addTo(map);
+            {#map.addLayer(circle_datasets);#}
+
+            lines_datasets.addTo(map);
+
+
+            var baseLayers = {
+                {#"OSM": osm,#}
+            }
+
+            var groupedOverlays = {
+                "Landmarks": {
+                    "Каналы": lines_datasets,
+                    "БСПД": circle_datasets,
+                    'Точки': markers,
+                },
+            }
+
+
+            L.control.groupedLayers(baseLayers, groupedOverlays).addTo(map)
+
+
+
+        }
+
+    </script>
+
+    {% leaflet_map "gis" callback="window.our_layers" %}
+
+</div>
+
+
+{% endblock content %}
+
+
+    
+
+
